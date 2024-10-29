@@ -24,15 +24,30 @@ void rewrite() {
     SetConsoleCursorPosition(hConsole, coord);
 }
 
+void clear() {
+    COORD coord;
+    coord.X = 0;
+    coord.Y = 0;
+    DWORD numOfChar;
+    FillConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE), ' ', 10000, coord, &numOfChar);
+}
+
 // intro actions
 void drawLine(int loop, int LENGTH, int BAR_LENGTH) {
     for (int i = 0; i < loop - BAR_LENGTH; i++) printf(" ");
-    for (int i = 0; i < (loop - BAR_LENGTH < 0) ? BAR_LENGTH-loop : BAR_LENGTH; i++) printf("#");
+
+    if (loop < BAR_LENGTH)
+        for (int i = 0; i < BAR_LENGTH - loop; i++) printf("#");
+    else
+        for (int i = 0; i < BAR_LENGTH; i++) printf("#");
+    
     for (int i = 0; i < LENGTH - loop; i++) printf(" ");
 }
 
 // animation
 void introAnimation() {
+    clear();
+
     int loop = 0;
     while (true) {
         const int BAR_LENGTH = 4;
@@ -44,10 +59,10 @@ void introAnimation() {
         }
 
         rewrite();
-        drawLine(loop, LENGTH, BAR_LENGTH);
+        drawLine(LENGTH-loop, LENGTH, BAR_LENGTH);
         printFile("intro");
         drawLine(loop, LENGTH, BAR_LENGTH);
-        Sleep(10);
+        Sleep(5);
         loop++;
     }
 }
