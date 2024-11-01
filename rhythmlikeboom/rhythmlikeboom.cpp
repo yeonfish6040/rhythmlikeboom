@@ -34,14 +34,22 @@ void clear() {
 
 // intro actions
 void drawLine(int loop, int LENGTH, int BAR_LENGTH) {
-    for (int i = 0; i < loop - BAR_LENGTH; i++) printf(" ");
+    loop = LENGTH + BAR_LENGTH < loop ? (LENGTH + BAR_LENGTH)*2 - loop : loop;
+	loop = loop < 0 ? loop * -1 : loop;
+
+    for (int i = 0; i < loop - BAR_LENGTH; i++) { 
+        if (BAR_LENGTH - (loop - LENGTH) < 0) break;
+        printf("=");
+    }
 
     if (loop < BAR_LENGTH)
-        for (int i = 0; i < BAR_LENGTH - loop; i++) printf("#");
+        for (int i = 0; i < loop; i++) printf("#");
+    else if (LENGTH < loop)
+        for (int i = 0; i < BAR_LENGTH-(loop-LENGTH); i++) printf("#");
     else
         for (int i = 0; i < BAR_LENGTH; i++) printf("#");
     
-    for (int i = 0; i < LENGTH - loop; i++) printf(" ");
+    for (int i = 0; i < LENGTH - loop; i++) printf("=");
 }
 
 // animation
@@ -50,10 +58,13 @@ void introAnimation() {
 
     int loop = 0;
     while (true) {
-        const int BAR_LENGTH = 4;
+        const int BAR_LENGTH = 10;
         const int LENGTH = 130;
 
-        if (loop > 130) loop = 0;
+        if (loop > (LENGTH + BAR_LENGTH)*2) {
+            loop = 0;
+            clear();
+            }
         if (GetKeyState(VK_RETURN) & 0x8000) {
             break;
         }
@@ -62,16 +73,17 @@ void introAnimation() {
         drawLine(LENGTH-loop, LENGTH, BAR_LENGTH);
         printFile("intro");
         drawLine(loop, LENGTH, BAR_LENGTH);
-        Sleep(5);
         loop++;
+
+        Sleep(1);
     }
 }
 
 // initialize
 void initScreen() {
     HWND wh = GetConsoleWindow();
-    MoveWindow(wh, 0, 0, 1920, 1000, TRUE);
-    MoveWindow(wh, 0, 0, 1920, 1080, TRUE);
+    MoveWindow(wh, 0, 0, 1920, 1000, 1);
+    MoveWindow(wh, 0, 0, 1920, 1080, 1);
     std::cout << "\n";
 }
 
