@@ -24,5 +24,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\text\intro.txt" />
+    <Text Include="resources\text\3.txt" />
+    <Text Include="resources\text\1.txt" />
+    <Text Include="resources\text\2.txt" />
   </ItemGroup>
 </Project>

@@ -79,6 +79,21 @@ void introAnimation() {
     }
 }
 
+void mainAimation() {
+    clear();
+    rewrite();
+    printFile("3");
+	Sleep(1000);
+    clear();
+    rewrite();
+    printFile("2");
+    Sleep(1000);
+    clear();
+    rewrite();
+    printFile("1");
+    Sleep(1000);
+}
+
 // initialize
 void initScreen() {
     HWND wh = GetConsoleWindow();
@@ -90,4 +105,5 @@ void initScreen() {
 int main() {
     initScreen();
     introAnimation();
+    mainAimation();
 }

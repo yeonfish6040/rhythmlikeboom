@@ -130,6 +130,9 @@
     <ClCompile Include="rhythmlikeboom.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="resources\text\1.txt" />
+    <Text Include="resources\text\2.txt" />
+    <Text Include="resources\text\3.txt" />
     <Text Include="resources\text\intro.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
