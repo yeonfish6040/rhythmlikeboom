@@ -1,5 +1,7 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #define BUFFSIZE 768
+#define WIDTH 1280
+#define HEIGHT 720
 
 
 #include <iostream>
@@ -16,6 +18,7 @@ using namespace std;
 // global variables
 char* screen;
 int columns, rows;
+int windowSize[2];
 
 // global utils
 HWND GetConsoleHandle() {
@@ -34,10 +37,55 @@ HWND GetConsoleHandle() {
     return(hwnd);
 }
 
+int* getWindowBorderSize() {
+    HWND consoleWindow = GetConsoleWindow();
+    RECT wrect;
+    GetWindowRect(consoleWindow, &wrect);
+    RECT crect;
+    GetClientRect(consoleWindow, &crect);
+    POINT lefttop = { crect.left, crect.top };
+    ClientToScreen(consoleWindow, &lefttop);
+    POINT rightbottom = { crect.right, crect.bottom };
+    ClientToScreen(consoleWindow, &rightbottom);
+
+    int left_border = lefttop.x - wrect.left;
+    int right_border = wrect.right - rightbottom.x;
+    int bottom_border = wrect.bottom - rightbottom.y;
+    int top_border_with_title_bar = lefttop.y - wrect.top;
+
+	int borders[4] = { top_border_with_title_bar, left_border, right_border, bottom_border  };
+    return borders;
+}
+
+int* getRealWindowSize() {
+	int size[2];
+	HWND consoleWindow = GetConsoleWindow();
+	RECT rect;
+    if (GetWindowRect(consoleWindow, &rect)) {
+		int* borders = getWindowBorderSize();
+        size[0] = WIDTH - borders[1] - borders[2];
+        size[1] = HEIGHT - borders[0] - borders[3];
+    }
+	return size;
+}
+
+POINT getMouseClickPosition() {
+    POINT p;
+    if (GetCursorPos(&p)) {
+        RECT rect;
+        if (ScreenToClient(GetConsoleWindow(), &p)) {
+            return p;
+        }
+    }
+    p.x = -1;
+    p.y = -1;
+    return p;
+}
+
 int* getPosByPersentage(int x, int y) {
     int pos[2];
-    pos[0] = (int)((float)columns * ((float)x / (float)100));
-    pos[1] = (int)((float)rows * ((float)y / (float)100));
+    pos[0] = (int)((float)columns * ((float)x / (float)100)) + 1;
+    pos[1] = (int)((float)rows * ((float)y / (float)100)) + 1;
     return pos;
 }
 
@@ -109,7 +157,8 @@ void render() {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++)
             printf("%c", screen[i * columns + j]);
-        printf("\n");
+        if (i != rows-1)
+            printf("\n");
     }
 }
 
@@ -166,7 +215,7 @@ void introAnimation() {
     }
 }
 
-void mainAimation() {
+void countdownAimation() {
     clearScreen();
     rewrite();
     printString(getFile("3"), 1);
@@ -181,12 +230,31 @@ void mainAimation() {
     Sleep(1000);
 }
 
+void mainAimation() {
+    clearScreen();
+    while (true) {
+        if (GetKeyState(VK_RETURN) & 0x8000) {
+            //break;
+        }
+
+        if (GetKeyState(VK_LBUTTON) & 0x8000) {
+            POINT p = getMouseClickPosition();
+            if (p.x != -1 && p.y != -1) {
+                int* pos = getPosByPersentage((int)(((float)p.x * (float)100) / (float)windowSize[0]), (int)(((float)p.y * (float)100) / (float)windowSize[1]));
+                clear();
+                setPixel(pos, '+');
+                render();
+            }
+        }
+    }
+}
+
 
 // initialize
 void initScreen() {
     // window size
     HWND wh = GetConsoleHandle();
-    MoveWindow(wh, 0, 0, 1920, 1080, 1);
+    MoveWindow(wh, 0, 0, WIDTH, HEIGHT, 1);
     cout << "\n";
 
     Sleep(100);
@@ -194,8 +262,24 @@ void initScreen() {
     // get console size
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    columns = csbi.srWindow.Right - csbi.srWindow.Left;
+    rows = csbi.srWindow.Bottom - csbi.srWindow.Top;    
+
+    // hide cursor
+    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO info;
+    info.dwSize = 100;
+    info.bVisible = FALSE;
+    SetConsoleCursorInfo(consoleHandle, &info);
+
+    // disable selecting
+    DWORD prev_mode;
+    GetConsoleMode(consoleHandle, &prev_mode);
+    SetConsoleMode(consoleHandle, ENABLE_EXTENDED_FLAGS | (prev_mode & ~ENABLE_QUICK_EDIT_MODE));
+
+    // get window size
+    windowSize[0] = getRealWindowSize()[0] - 10;
+    windowSize[1] = getRealWindowSize()[1] - 10;
 
 	// screen buffer
     screen = (char*)malloc(columns * rows * sizeof(char)); // 208 * 53
@@ -209,8 +293,10 @@ int main() {
     initScreen();
 
     introAnimation();
-    mainAimation();
+    countdownAimation();
 
-	setPixel(getPosByPersentage(50, 50), 'A');
-    render();
+	mainAimation();
+
+	//setPixel(getPosByPersentage(50, 50), '+');
+ //   render();
 }
