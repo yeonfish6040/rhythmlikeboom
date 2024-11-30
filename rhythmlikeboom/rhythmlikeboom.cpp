@@ -36,8 +36,8 @@ HWND GetConsoleHandle() {
 
 int* getPosByPersentage(int x, int y) {
     int pos[2];
-    pos[0] = columns * x / 100;
-    pos[1] = rows * y / 100;
+    pos[0] = (int)((float)columns * ((float)x / (float)100));
+    pos[1] = (int)((float)rows * ((float)y / (float)100));
     return pos;
 }
 
@@ -99,11 +99,16 @@ void printString(vector<string> data, int center) {
     }
 }
 
+void setPixel(int* pos, char c) {
+    screen[pos[1] * columns + pos[0]] = c;
+}
+
+
 void render() {
     rewrite();
-    for (int i = 0; i < columns; i++) {
-        for (int j = 0; j < rows; j++)
-            printf("%c", screen[i * rows + j]);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++)
+            printf("%c", screen[i * columns + j]);
         printf("\n");
     }
 }
@@ -192,10 +197,15 @@ void initScreen() {
     rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 
     screen = (char*)malloc(columns * rows * sizeof(char)); // 208 * 53
+
+    clear();
 }
 
 int main() {
     initScreen();
     introAnimation();
-    mainAimation();
+    //mainAimation();
+
+	setPixel(getPosByPersentage(50, 50), 'A');
+    render();
 }
