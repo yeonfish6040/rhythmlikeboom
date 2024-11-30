@@ -191,20 +191,25 @@ void initScreen() {
 
     Sleep(100);
 
+    // get console size
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 
+	// screen buffer
     screen = (char*)malloc(columns * rows * sizeof(char)); // 208 * 53
 
+	// clear screen buffer
     clear();
+	clearScreen();
 }
 
 int main() {
     initScreen();
+
     introAnimation();
-    //mainAimation();
+    mainAimation();
 
 	setPixel(getPosByPersentage(50, 50), 'A');
     render();
