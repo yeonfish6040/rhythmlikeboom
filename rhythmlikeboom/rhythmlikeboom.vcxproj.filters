@@ -28,6 +28,13 @@
     <Text Include="resources\text\1.txt" />
     <Text Include="resources\text\2.txt" />
     <Text Include="resources\text\script.txt" />
+    <Text Include="resources\text\9.txt" />
+    <Text Include="resources\text\8.txt" />
+    <Text Include="resources\text\7.txt" />
+    <Text Include="resources\text\6.txt" />
+    <Text Include="resources\text\5.txt" />
+    <Text Include="resources\text\4.txt" />
+    <Text Include="resources\text\0.txt" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="resources\music\BadApple.mp3" />
