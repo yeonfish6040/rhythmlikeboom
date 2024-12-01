@@ -27,5 +27,15 @@
     <Text Include="resources\text\3.txt" />
     <Text Include="resources\text\1.txt" />
     <Text Include="resources\text\2.txt" />
+    <Text Include="resources\text\script.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\music\BadApple.mp3" />
+    <Media Include="resources\music\BadApple.wav">
+      <Filter>리소스 파일</Filter>
+    </Media>
+    <Media Include="resources\music\Offbeats.wav">
+      <Filter>리소스 파일</Filter>
+    </Media>
   </ItemGroup>
 </Project>

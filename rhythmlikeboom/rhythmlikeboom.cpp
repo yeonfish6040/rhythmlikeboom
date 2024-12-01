@@ -1,24 +1,39 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
+
 #define BUFFSIZE 768
 #define WIDTH 1280
 #define HEIGHT 720
 
+#define MUSIC_PATH "./resources/music/Offbeats.wav"
 
 #include <iostream>
 #include <fstream>
-#include <cstring>
-#include <windows.h>
-#include <string.h>
 #include <vector>
 #include <string>
+#include <cstring>
+#include <chrono>
+
+#include <tchar.h> 
+#include <string.h>
+#include <windows.h>
+#include <mmsystem.h>
+
+#pragma comment(lib, "winmm")
+
 
 using namespace std;
+using namespace std::chrono;
 
 
 // global variables
-char* screen;
-int columns, rows;
-int windowSize[2];
+char* SCREEN;
+int COLUMNS, ROWS;
+int WINDOWSIZE[2];
+
+int SPOTPOS[2];
+long LASTSPOTTIMESTAMP;
+
+int SCORE;
 
 // global utils
 HWND GetConsoleHandle() {
@@ -60,12 +75,9 @@ int* getWindowBorderSize() {
 int* getRealWindowSize() {
 	int size[2];
 	HWND consoleWindow = GetConsoleWindow();
-	RECT rect;
-    if (GetWindowRect(consoleWindow, &rect)) {
-		int* borders = getWindowBorderSize();
-        size[0] = WIDTH - borders[1] - borders[2];
-        size[1] = HEIGHT - borders[0] - borders[3];
-    }
+	int* borders = getWindowBorderSize();
+    size[0] = WIDTH - borders[1] - borders[2];
+    size[1] = HEIGHT - borders[0] - borders[3];
 	return size;
 }
 
@@ -83,9 +95,9 @@ POINT getMouseClickPosition() {
 }
 
 int* getPosByPersentage(int x, int y) {
-    int pos[2];
-    pos[0] = (int)((float)columns * ((float)x / (float)100)) + 1;
-    pos[1] = (int)((float)rows * ((float)y / (float)100)) + 1;
+    static int pos[2];
+    pos[0] = (int)((float)COLUMNS * ((float)x / (float)100)) + 1;
+    pos[1] = (int)((float)ROWS * ((float)y / (float)100)) + 1;
     return pos;
 }
 
@@ -107,6 +119,10 @@ void concatVector(vector<string>& a, const vector<string>& b) {
     }
 }
 
+time_point<high_resolution_clock> getCurrentTime() {
+    return high_resolution_clock::now();;
+}
+
 // global actions
 void rewrite() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -117,8 +133,8 @@ void rewrite() {
 }
 
 void clear() {
-    for (int i = 0; i < columns * rows; i++)
-        screen[i] = ' ';
+    for (int i = 0; i < COLUMNS * ROWS; i++)
+        SCREEN[i] = ' ';
 }
 
 void clearScreen() {
@@ -131,33 +147,38 @@ void clearScreen() {
 
 void printString(vector<string> data, int center) {
     if (center) {
-        int space = (rows - data.size()) / 2;
+        int space = (ROWS - data.size()) / 2;
         for (int j = 0; j < space; j++) printf("\n");
         for (int i = 0; i < data.size(); i++) {
-            int pos = (columns - data.at(i).length()) / 2;
+            int pos = (COLUMNS - data.at(i).length()) / 2;
             for (int i = 0; i < pos; i++) printf(" ");
             printf("%s\n", data.at(i).c_str());
         }
     }else {
         for (int i = 0; i < data.size(); i++) {
-            int pos = (columns - data.at(i).length()) / 2;
+            int pos = (COLUMNS - data.at(i).length()) / 2;
             for (int i = 0; i < pos; i++) printf(" ");
             printf("%s\n", data.at(i).c_str());
         }
     }
 }
 
+char getPixel(int* pos) {
+    return SCREEN[pos[1] * COLUMNS + pos[0]];
+}
+
 void setPixel(int* pos, char c) {
-    screen[pos[1] * columns + pos[0]] = c;
+    if (pos[0] < 0 || pos[0] >= COLUMNS || pos[1] < 0 || pos[1] >= ROWS) return;
+    SCREEN[pos[1] * COLUMNS + pos[0]] = c;
 }
 
 
 void render() {
     rewrite();
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < columns; j++)
-            printf("%c", screen[i * columns + j]);
-        if (i != rows-1)
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLUMNS; j++)
+            printf("%c", SCREEN[i * COLUMNS + j]);
+        if (i != ROWS -1)
             printf("\n");
     }
 }
@@ -186,6 +207,55 @@ string drawLine(int loop, int LENGTH, int BAR_LENGTH) {
     return line;
 }
 
+// main actions
+void playMusic() {
+    PlaySound(TEXT(MUSIC_PATH), NULL, SND_ASYNC);
+}
+
+void drawCircle(int* pos, char c) {
+    setPixel(pos, c);
+
+    int posTmp[2];
+
+    // 1
+    posTmp[0] = pos[0] + 1;
+    posTmp[1] = pos[1];
+    setPixel(posTmp, c);
+    posTmp[0] = pos[0] - 1;
+    setPixel(posTmp, c);
+    posTmp[0] = pos[0];
+    posTmp[1] = pos[1] + 1;
+    setPixel(posTmp, c);
+    posTmp[1] = pos[1] - 1;
+    setPixel(posTmp, c);
+
+    // 2
+    posTmp[0] = pos[0] + 2;
+    posTmp[1] = pos[1];
+    setPixel(posTmp, c);
+    posTmp[0] = pos[0] - 2;
+    setPixel(posTmp, c);
+    posTmp[0] = pos[0] + 1;
+    posTmp[1] = pos[1] + 1;
+    setPixel(posTmp, c);
+    posTmp[1] = pos[1] - 1;
+    setPixel(posTmp, c);
+    posTmp[0] = pos[0] - 1;
+    setPixel(posTmp, c);
+    posTmp[1] = pos[1] + 1;
+    setPixel(posTmp, c);
+}
+
+vector<long> scriptLoader() {
+	vector<string> script = getFile("script");
+
+	vector<long> timestamps;
+	for (int i = 0;i < script.size();i++) {
+        timestamps.push_back(stol(script.at(i)));
+	}
+    return timestamps;
+}
+
 // animation
 void introAnimation() {
     clearScreen();
@@ -199,7 +269,7 @@ void introAnimation() {
             loop = 0;
             clear();
         }
-        if (GetKeyState(VK_RETURN) & 0x8000) {
+        if (GetKeyState(VK_SPACE) & 0x8000) {
             break;
         }
 
@@ -232,19 +302,51 @@ void countdownAimation() {
 
 void mainAimation() {
     clearScreen();
+
+	int loop = 0;
+    vector<long> script = scriptLoader();
+
+	int* nextSpotPos;
+    nextSpotPos = getPosByPersentage(rand() % 101, rand() % 101);
+
+    time_point<high_resolution_clock> start = getCurrentTime();
+    playMusic();
     while (true) {
-        if (GetKeyState(VK_RETURN) & 0x8000) {
-            //break;
+		int renderFlag = 0;
+		time_point<high_resolution_clock> now = getCurrentTime();
+		long estimatedTimeMillis = duration_cast<milliseconds>(now - start).count();
+
+        if (GetKeyState(VK_SPACE) & 0x8000) {
+            break;
         }
 
         if (GetKeyState(VK_LBUTTON) & 0x8000) {
             POINT p = getMouseClickPosition();
             if (p.x != -1 && p.y != -1) {
-                int* pos = getPosByPersentage((int)(((float)p.x * (float)100) / (float)windowSize[0]), (int)(((float)p.y * (float)100) / (float)windowSize[1]));
-                clear();
+                int* pos = getPosByPersentage((int)(((float)p.x * (float)100) / (float)WINDOWSIZE[0]), (int)(((float)p.y * (float)100) / (float)WINDOWSIZE[1]));
                 setPixel(pos, '+');
-                render();
+                renderFlag = 1;
             }
+        }
+
+        if (loop < script.size() && estimatedTimeMillis >= script.at(loop)) {
+            clear();
+            SPOTPOS[0] = nextSpotPos[0];
+            SPOTPOS[1] = nextSpotPos[1];
+            nextSpotPos = getPosByPersentage(rand() % 101, rand() % 101);
+			drawCircle(SPOTPOS, '#');
+        
+            if (loop + 1 < script.size()) {
+                drawCircle(nextSpotPos, '-');
+            }
+
+			loop++;
+            renderFlag = 1;
+		}
+
+
+        if (renderFlag) {
+			render();
         }
     }
 }
@@ -262,8 +364,8 @@ void initScreen() {
     // get console size
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    columns = csbi.srWindow.Right - csbi.srWindow.Left;
-    rows = csbi.srWindow.Bottom - csbi.srWindow.Top;    
+    COLUMNS = csbi.srWindow.Right - csbi.srWindow.Left;
+    ROWS = csbi.srWindow.Bottom - csbi.srWindow.Top;    
 
     // hide cursor
     HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -278,11 +380,11 @@ void initScreen() {
     SetConsoleMode(consoleHandle, ENABLE_EXTENDED_FLAGS | (prev_mode & ~ENABLE_QUICK_EDIT_MODE));
 
     // get window size
-    windowSize[0] = getRealWindowSize()[0] - 10;
-    windowSize[1] = getRealWindowSize()[1] - 10;
+    WINDOWSIZE[0] = getRealWindowSize()[0] - 10;
+    WINDOWSIZE[1] = getRealWindowSize()[1] - 10;
 
 	// screen buffer
-    screen = (char*)malloc(columns * rows * sizeof(char)); // 208 * 53
+    SCREEN = (char*)malloc(COLUMNS * ROWS * sizeof(char)); // 208 * 53
 
 	// clear screen buffer
     clear();
@@ -290,6 +392,7 @@ void initScreen() {
 }
 
 int main() {
+    srand(time(NULL));
     initScreen();
 
     introAnimation();
@@ -298,5 +401,5 @@ int main() {
 	mainAimation();
 
 	//setPixel(getPosByPersentage(50, 50), '+');
- //   render();
+    //render();
 }
