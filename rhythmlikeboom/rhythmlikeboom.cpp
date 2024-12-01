@@ -298,7 +298,7 @@ void introAnimation() {
 
         rewrite();
         vector<string> data;
-        data.push_back(drawLine(LENGTH - loop, LENGTH, BAR_LENGTH));
+        data.push_back(drawLine((LENGTH + BAR_LENGTH) - loop, LENGTH, BAR_LENGTH));
         concatVector(data, getFile("intro"));
         data.push_back(drawLine(loop, LENGTH, BAR_LENGTH));
         printString(data, 1);
