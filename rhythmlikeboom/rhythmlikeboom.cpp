@@ -444,7 +444,7 @@ int main() {
     printString(getNumber(const_cast<char*>(to_string(SCORE).c_str())), 1);
 
     while (1) {
-        if (GetKeyState(VK_SPACE) & 0x8000) {
+        if (GetKeyState(VK_ESCAPE) & 0x8000) {
             break;
         }
         Sleep(10);
